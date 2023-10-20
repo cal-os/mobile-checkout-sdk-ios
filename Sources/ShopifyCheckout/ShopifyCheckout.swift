@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 */
 
 import UIKit
+import SwiftUI
 
 /// The version of the `ShopifyCheckout` library.
 public let version = "0.1.0"
@@ -50,4 +51,76 @@ public func present(checkout url: URL, from: UIViewController, delegate: Checkou
 	let viewController = UINavigationController(rootViewController: rootViewController)
 	viewController.presentationController?.delegate = rootViewController
 	from.present(viewController, animated: true)
+}
+
+struct ShopifyCheckoutView: UIViewControllerRepresentable {
+
+    private let url: URL
+    
+    init(url: URL) {
+        self.url = url
+    }
+
+    func makeUIViewController(context: Context) -> CheckoutViewController {
+        ShopifyCheckout.configure { configuration in
+            configuration.preloading.enabled = true
+        }
+        return CheckoutViewController(checkoutURL: url, delegate: context.coordinator)
+    }
+    
+    func updateUIViewController(_ uiViewController: CheckoutViewController, context: Context) {
+        
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        .init(parent: self)
+    }
+    
+    final public class Coordinator: NSObject, CheckoutDelegate {
+        
+        private let parent: ShopifyCheckoutView
+
+        init(parent: ShopifyCheckoutView) {
+            self.parent = parent
+        }
+        
+        public func checkoutDidComplete() {
+            
+        }
+        
+        public func checkoutDidCancel() {
+            
+        }
+        
+        public func checkoutDidFail(error: CheckoutError) {
+            
+        }
+    }
+}
+
+private struct URLContainer: Identifiable {
+    let url: URL
+    var id: Int {
+        url.hashValue
+    }
+}
+
+extension URL: Identifiable {
+    public var id: Int {
+        self.hashValue
+    }
+}
+
+public extension View {
+    func checkoutSheet(url: Binding<URL?>) -> some View {
+        sheet(
+            item: url,
+            onDismiss: {
+                url.wrappedValue = nil
+            },
+            content: { url in
+                ShopifyCheckoutView(url: url)
+            }
+        )
+    }
 }
